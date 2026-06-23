@@ -1,6 +1,6 @@
 # LLM Security Tester
 
-[![CI](https://github.com/theloav/llm-security-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/theloav/llm-security-framework/actions)
+[![CI](https://github.com/theloav/llm-security-framework/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/theloav/llm-security-framework/actions)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
