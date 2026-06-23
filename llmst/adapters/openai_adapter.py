@@ -36,7 +36,7 @@ class OpenAIAdapter(BaseAdapter):
         return response.choices[0].message.content or ""
 
     @classmethod
-    def from_config(cls, cfg: dict[str, object]) -> "OpenAIAdapter":
+    def from_config(cls, cfg: dict[str, object]) -> OpenAIAdapter:
         return cls(
             model=str(cfg.get("model", "gpt-4o-mini")),
             api_key=str(cfg["api_key"]) if cfg.get("api_key") else None,

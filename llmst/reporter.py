@@ -4,13 +4,31 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import TypedDict
 
 from jinja2 import Environment
 
 from llmst.plugins.base import SEVERITY_ORDER
 from llmst.scorer import TestResult
+
+
+class CategoryStats(TypedDict):
+    total: int
+    passed: int
+    failed: int
+    pass_rate: float
+
+
+class SummaryResult(TypedDict):
+    total: int
+    passed: int
+    failed: int
+    critical_failed: int
+    pass_rate: float
+    by_category: dict[str, CategoryStats]
+    by_severity: dict[str, CategoryStats]
 
 # ── HTML template (self-contained, no CDN) ────────────────────────────────────
 _HTML_TEMPLATE = """<!DOCTYPE html>
@@ -138,34 +156,35 @@ class Reporter:
     def __init__(self, results: list[TestResult], target: str = "unknown") -> None:
         self._results = results
         self._target = target
-        self._generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        self._generated_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
-    def summary(self) -> dict[str, object]:
+    def summary(self) -> SummaryResult:
         total = len(self._results)
         passed = sum(1 for r in self._results if r.passed)
         failed = total - passed
         critical_failed = sum(1 for r in self._results if not r.passed and r.severity == "critical")
         pass_rate = (passed / total * 100) if total else 0.0
 
-        by_cat: dict[str, dict[str, object]] = defaultdict(lambda: {"total": 0, "passed": 0, "failed": 0})
-        by_sev: dict[str, dict[str, object]] = defaultdict(lambda: {"total": 0, "passed": 0, "failed": 0})
+        def _empty() -> CategoryStats:
+            return {"total": 0, "passed": 0, "failed": 0, "pass_rate": 0.0}
+
+        by_cat: dict[str, CategoryStats] = defaultdict(_empty)
+        by_sev: dict[str, CategoryStats] = defaultdict(_empty)
 
         for r in self._results:
-            by_cat[r.category]["total"] = int(by_cat[r.category]["total"]) + 1  # type: ignore[operator]
-            by_sev[r.severity]["total"] = int(by_sev[r.severity]["total"]) + 1  # type: ignore[operator]
+            by_cat[r.category]["total"] += 1
+            by_sev[r.severity]["total"] += 1
             if r.passed:
-                by_cat[r.category]["passed"] = int(by_cat[r.category]["passed"]) + 1  # type: ignore[operator]
-                by_sev[r.severity]["passed"] = int(by_sev[r.severity]["passed"]) + 1  # type: ignore[operator]
+                by_cat[r.category]["passed"] += 1
+                by_sev[r.severity]["passed"] += 1
             else:
-                by_cat[r.category]["failed"] = int(by_cat[r.category]["failed"]) + 1  # type: ignore[operator]
-                by_sev[r.severity]["failed"] = int(by_sev[r.severity]["failed"]) + 1  # type: ignore[operator]
+                by_cat[r.category]["failed"] += 1
+                by_sev[r.severity]["failed"] += 1
 
         for stats in by_cat.values():
-            t = int(stats["total"])  # type: ignore[arg-type]
-            stats["pass_rate"] = (int(stats["passed"]) / t * 100) if t else 0.0  # type: ignore[operator]
+            stats["pass_rate"] = (stats["passed"] / stats["total"] * 100) if stats["total"] else 0.0
         for stats in by_sev.values():
-            t = int(stats["total"])  # type: ignore[arg-type]
-            stats["pass_rate"] = (int(stats["passed"]) / t * 100) if t else 0.0  # type: ignore[operator]
+            stats["pass_rate"] = (stats["passed"] / stats["total"] * 100) if stats["total"] else 0.0
 
         return {
             "total": total,
@@ -197,16 +216,16 @@ class Reporter:
             "",
             f"**Generated:** {self._generated_at}  ",
             f"**Target:** `{self._target}`  ",
-            f"**Overall Pass Rate:** {s['pass_rate']:.1f}% ({s['passed']}/{s['total']})",  # type: ignore[str-bytes-safe]
+            f"**Overall Pass Rate:** {s['pass_rate']:.1f}% ({s['passed']}/{s['total']})",
             "",
             "## Executive Summary",
             "",
             "| Category | Tests | Passed | Failed | Pass Rate |",
             "| --- | ---: | ---: | ---: | ---: |",
         ]
-        for cat, stats in s["by_category"].items():  # type: ignore[union-attr]
+        for cat, stats in s["by_category"].items():
             lines.append(
-                f"| {cat} | {stats['total']} | {stats['passed']} | {stats['failed']} | {stats['pass_rate']:.0f}% |"  # type: ignore[index]
+                f"| {cat} | {stats['total']} | {stats['passed']} | {stats['failed']} | {stats['pass_rate']:.0f}% |"
             )
 
         # Group results by category

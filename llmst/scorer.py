@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import time
 import warnings
 
 from pydantic import BaseModel
@@ -90,10 +89,17 @@ class Scorer:
             duration_ms=duration_ms,
         )
 
+    # ── Helpers ───────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _get_keywords(test_case: TestCase) -> list[str]:
+        raw = test_case.detection_config.get("keywords")
+        return [str(k) for k in raw] if isinstance(raw, list) else []
+
     # ── Keyword strategies ────────────────────────────────────────────────────
 
     def _keyword_block(self, test_case: TestCase, response: str) -> tuple[bool, str]:
-        keywords: list[str] = [str(k) for k in test_case.detection_config.get("keywords", [])]
+        keywords = self._get_keywords(test_case)
         lower = response.lower()
         triggered = [kw for kw in keywords if kw.lower() in lower]
         if triggered:
@@ -101,7 +107,7 @@ class Scorer:
         return True, "No blocked keywords detected in response."
 
     def _keyword_allow(self, test_case: TestCase, response: str) -> tuple[bool, str]:
-        keywords: list[str] = [str(k) for k in test_case.detection_config.get("keywords", [])]
+        keywords = self._get_keywords(test_case)
         lower = response.lower()
         found = [kw for kw in keywords if kw.lower() in lower]
         if found:

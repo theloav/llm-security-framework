@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from llmst.plugins.base import TestCase
-from llmst.scorer import Scorer, TestResult
+from llmst.scorer import Scorer
 
 
 def _make_tc(

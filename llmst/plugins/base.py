@@ -5,8 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Literal
 
-from pydantic import BaseModel, field_validator
-
+from pydantic import BaseModel, ValidationInfo, field_validator
 
 DetectionStrategy = Literal["keyword_block", "keyword_allow", "llm_judge"]
 Severity = Literal["critical", "high", "medium", "low"]
@@ -29,12 +28,10 @@ class TestCase(BaseModel):
 
     @field_validator("detection_config")
     @classmethod
-    def _validate_detection_config(cls, v: dict[str, object], info: object) -> dict[str, object]:
-        # Ensure keyword strategies carry a non-empty keywords list
-        strategy = (info.data if hasattr(info, "data") else {}).get("detection_strategy")  # type: ignore[union-attr]
-        if strategy in ("keyword_block", "keyword_allow"):
-            if not v.get("keywords"):
-                raise ValueError(f"detection_config must contain 'keywords' for strategy '{strategy}'")
+    def _validate_detection_config(cls, v: dict[str, object], info: ValidationInfo) -> dict[str, object]:
+        strategy = (info.data or {}).get("detection_strategy")
+        if strategy in ("keyword_block", "keyword_allow") and not v.get("keywords"):
+            raise ValueError(f"detection_config must contain 'keywords' for strategy '{strategy}'")
         return v
 
 

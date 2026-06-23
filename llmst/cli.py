@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
 import click
 from rich.console import Console
 from rich.table import Table
+
+from llmst.adapters.base import BaseAdapter
+from llmst.reporter import SummaryResult
 
 console = Console()
 
@@ -21,7 +23,7 @@ def _build_adapter(
     model: str | None,
     api_key: str | None,
     url: str | None,
-) -> "BaseAdapter":  # noqa: F821
+) -> BaseAdapter:
     from llmst.adapters import AnthropicAdapter, HTTPAdapter, OllamaAdapter, OpenAIAdapter
 
     if target == "openai":
@@ -83,7 +85,7 @@ def run_cmd(
     scorer = Scorer(llm_judge_adapter=judge_adapter)
     runner = Runner(adapter=adapter, scorer=scorer, verbose=verbose)
 
-    console.print(f"\n[bold cyan]LLM Security Tester[/bold cyan] v0.1.0")
+    console.print("\n[bold cyan]LLM Security Tester[/bold cyan] v0.1.0")
     console.print(f"[dim]Target:[/dim] [bold]{adapter.name}[/bold]")
     if cat_list:
         console.print(f"[dim]Categories:[/dim] {', '.join(cat_list)}")
@@ -120,7 +122,7 @@ def run_cmd(
         console.print(f"  [green]✓[/green] HTML  → {p}")
 
     console.print()
-    failed = int(summary["failed"])  # type: ignore[arg-type]
+    failed = summary["failed"]
     sys.exit(1 if failed > 0 else 0)
 
 
@@ -174,12 +176,14 @@ def info_cmd(test_id: str) -> None:
     sys.exit(1)
 
 
-def _print_summary(summary: dict[str, object]) -> None:
-    pass_rate = float(summary["pass_rate"])  # type: ignore[arg-type]
+def _print_summary(summary: SummaryResult) -> None:
+    pass_rate = summary["pass_rate"]
     color = "green" if pass_rate >= 80 else "yellow" if pass_rate >= 50 else "red"
 
-    console.print(f"[bold]Security Pass Rate: [{color}]{pass_rate:.1f}%[/{color}][/bold]  "
-                  f"({summary['passed']}/{summary['total']} tests)")
+    console.print(
+        f"[bold]Security Pass Rate: [{color}]{pass_rate:.1f}%[/{color}][/bold]  "
+        f"({summary['passed']}/{summary['total']} tests)"
+    )
 
     table = Table(show_header=True, header_style="bold dim")
     table.add_column("Category")
@@ -188,20 +192,20 @@ def _print_summary(summary: dict[str, object]) -> None:
     table.add_column("Failed", justify="right", style="red")
     table.add_column("Pass Rate", justify="right")
 
-    for cat, stats in summary["by_category"].items():  # type: ignore[union-attr]
-        pr = float(stats["pass_rate"])  # type: ignore[index]
+    for cat, stats in summary["by_category"].items():
+        pr = stats["pass_rate"]
         rate_color = "green" if pr >= 80 else "yellow" if pr >= 50 else "red"
         table.add_row(
-            str(cat),
-            str(stats["total"]),  # type: ignore[index]
-            str(stats["passed"]),  # type: ignore[index]
-            str(stats["failed"]),  # type: ignore[index]
+            cat,
+            str(stats["total"]),
+            str(stats["passed"]),
+            str(stats["failed"]),
             f"[{rate_color}]{pr:.0f}%[/{rate_color}]",
         )
 
     console.print(table)
 
-    if int(summary["critical_failed"]) > 0:  # type: ignore[arg-type]
+    if summary["critical_failed"] > 0:
         console.print(f"\n[bold red]⚠  {summary['critical_failed']} critical test(s) failed![/bold red]")
 
 

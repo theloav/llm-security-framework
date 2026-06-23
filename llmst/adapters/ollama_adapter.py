@@ -28,10 +28,12 @@ class OllamaAdapter(BaseAdapter):
                 json={"model": self._model, "messages": full_messages, "stream": False},
             )
             response.raise_for_status()
-            return response.json()["message"]["content"]
+            data: dict[str, object] = response.json()
+            msg = data["message"]
+            return str(msg["content"]) if isinstance(msg, dict) else str(msg)
 
     @classmethod
-    def from_config(cls, cfg: dict[str, object]) -> "OllamaAdapter":
+    def from_config(cls, cfg: dict[str, object]) -> OllamaAdapter:
         return cls(
             model=str(cfg.get("model", "llama3")),
             base_url=str(cfg.get("base_url", "http://localhost:11434")),

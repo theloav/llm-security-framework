@@ -21,6 +21,6 @@ class BaseAdapter(ABC):
 
     @classmethod
     @abstractmethod
-    def from_config(cls, cfg: dict[str, object]) -> "BaseAdapter":
+    def from_config(cls, cfg: dict[str, object]) -> BaseAdapter:
         """Instantiate from a config dict (used by the CLI)."""
         ...

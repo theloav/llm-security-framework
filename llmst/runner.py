@@ -23,7 +23,7 @@ from rich.progress import (
 
 import llmst.plugins as _plugins_pkg
 from llmst.adapters.base import BaseAdapter
-from llmst.plugins.base import BasePlugin, SEVERITY_ORDER, TestCase
+from llmst.plugins.base import SEVERITY_ORDER, BasePlugin, TestCase
 from llmst.scorer import Scorer, TestResult
 
 console = Console()

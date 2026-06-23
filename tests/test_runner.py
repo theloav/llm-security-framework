@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from llmst.plugins.base import TestCase
 from llmst.runner import Runner, _discover_plugins
 from llmst.scorer import Scorer
 

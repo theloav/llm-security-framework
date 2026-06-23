@@ -23,19 +23,24 @@ class AnthropicAdapter(BaseAdapter):
             raise ImportError("anthropic package is required: pip install anthropic") from e
 
         client = anthropic.AsyncAnthropic(api_key=self._api_key)
-        kwargs: dict[str, object] = {
-            "model": self._model,
-            "max_tokens": 1024,
-            "messages": messages,
-        }
         if system:
-            kwargs["system"] = system
-
-        response = await client.messages.create(**kwargs)  # type: ignore[arg-type]
-        return response.content[0].text  # type: ignore[union-attr]
+            response = await client.messages.create(
+                model=self._model,
+                max_tokens=1024,
+                messages=messages,  # type: ignore[arg-type]
+                system=system,
+            )
+        else:
+            response = await client.messages.create(
+                model=self._model,
+                max_tokens=1024,
+                messages=messages,  # type: ignore[arg-type]
+            )
+        block = response.content[0]
+        return block.text if hasattr(block, "text") else str(block)
 
     @classmethod
-    def from_config(cls, cfg: dict[str, object]) -> "AnthropicAdapter":
+    def from_config(cls, cfg: dict[str, object]) -> AnthropicAdapter:
         return cls(
             model=str(cfg.get("model", "claude-haiku-4-5-20251001")),
             api_key=str(cfg["api_key"]) if cfg.get("api_key") else None,

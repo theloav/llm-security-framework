@@ -10,6 +10,14 @@ import httpx
 from llmst.adapters.base import BaseAdapter
 
 
+def _cast_str_dict(v: object) -> dict[str, str] | None:
+    return {str(k): str(val) for k, val in v.items()} if isinstance(v, dict) else None
+
+
+def _cast_obj_dict(v: object) -> dict[str, object] | None:
+    return {str(k): val for k, val in v.items()} if isinstance(v, dict) else None
+
+
 def _resolve_path(data: object, path: str) -> str:
     """Walk dot-notation path like 'choices.0.message.content' into nested data."""
     current: object = data
@@ -28,7 +36,8 @@ def _fill_template(template: dict[str, object], messages: list[dict[str, str]], 
     raw = json.dumps(template)
     raw = raw.replace('"{messages}"', json.dumps(messages))
     raw = raw.replace('"{system}"', json.dumps(system or ""))
-    return json.loads(raw)  # type: ignore[return-value]
+    result: dict[str, object] = json.loads(raw)
+    return result
 
 
 class HTTPAdapter(BaseAdapter):
@@ -58,11 +67,11 @@ class HTTPAdapter(BaseAdapter):
             return _resolve_path(response.json(), self._response_path)
 
     @classmethod
-    def from_config(cls, cfg: dict[str, object]) -> "HTTPAdapter":
+    def from_config(cls, cfg: dict[str, object]) -> HTTPAdapter:
         return cls(
             url=str(cfg["url"]),
-            headers=dict(cfg["headers"]) if cfg.get("headers") else None,  # type: ignore[arg-type]
-            request_template=dict(cfg["request_template"]) if cfg.get("request_template") else None,  # type: ignore[arg-type]
+            headers=_cast_str_dict(cfg.get("headers")),
+            request_template=_cast_obj_dict(cfg.get("request_template")),
             response_path=str(cfg.get("response_path", "choices.0.message.content")),
             name_override=str(cfg["name"]) if cfg.get("name") else None,
         )
