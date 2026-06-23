@@ -47,8 +47,8 @@ dev = [
 llmst = "llmst.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/your-org/llm-security-tester"
-Issues = "https://github.com/your-org/llm-security-tester/issues"
+Homepage = "https://github.com/theloav/llm-security-framework"
+Issues = "https://github.com/theloav/llm-security-framework/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["llmst"]

@@ -1,6 +1,6 @@
 # LLM Security Tester
 
-[![CI](https://github.com/your-org/llm-security-tester/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/llm-security-tester/actions)
+[![CI](https://github.com/theloav/llm-security-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/theloav/llm-security-framework/actions)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -35,7 +35,7 @@ llmst run --target openai --judge --categories persona_override,rag_poisoning
 
 **Install from source:**
 ```bash
-git clone https://github.com/your-org/llm-security-tester
+git clone https://github.com/theloav/llm-security-framework
 cd llm-security-tester
 pip install -e ".[dev]"
 ```
